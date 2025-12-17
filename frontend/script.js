@@ -49,6 +49,8 @@ let hasDrawn = false;
 let lastImageDataUrl = null;
 let lastConfidence = null;
 let mode = "pen"; // "pen" | "eraser"
+let lastPredictTime = 0;
+
 
 // ======================
 // Canvas Setup
@@ -151,6 +153,13 @@ function draw(e) {
   ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(x, y);
+  
+  const now = Date.now();
+  if (mode === "pen" && now - lastPredictTime > 400) {
+    lastPredictTime = now;
+    maybePredict();
+}
+
 }
 
 // ======================
@@ -198,14 +207,14 @@ function snapshotCanvas() {
 // Prediction
 // ======================
 async function maybePredict() {
-  if (getInkAmount() < 1500) {
-    predictionSpan.textContent = "🤔 noch zu wenig gezeichnet";
+  if (getInkAmount() < 50) {
+    predictionSpan.textContent = "noch zu wenig gezeichnet";
     confidenceSpan.textContent = "";
     topList.innerHTML = "";
     return;
   }
 
-  const dataUrl = snapshotCanvas(); // ⭐ WICHTIG
+  const dataUrl = snapshotCanvas(); 
   const formData = new FormData();
   formData.append("image_base64", dataUrl);
 
@@ -233,11 +242,11 @@ function updateUI(result) {
 
   if (prediction === targetWord && conf >= 0.35) {
     status = "✅ richtig!";
-    lastImageDataUrl = snapshotCanvas(); // ⭐ speichern mit weißem BG
+    lastImageDataUrl = snapshotCanvas();
     lastConfidence = conf;
     saveBtn.style.display = "inline-block";
   } else if (conf < 0.25) {
-    status = "🤔 unsicher";
+    status = "??? noch unsicher";
   } else {
     status = "❌ falsch";
   }
