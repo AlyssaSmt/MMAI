@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Montagsmaler KI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>🎨 Montagsmaler mit KI</h1>
+  <p>
+  <strong>Zeichne:</strong>
+  <span id="target-word">–</span>
+  </p>
+
+  <canvas id="canvas" width="400" height="400"></canvas>
+
+  <div class="buttons">
+    <button id="clear">🧹 Löschen</button>
+    <button id="predict">🤖 KI raten lassen</button>
+  </div>
+
+    <div id="result">
+    <h3>🤖 KI-Vermutung</h3>
+    <p><strong>Top-1:</strong> <span id="prediction">–</span> (<span id="confidence">–</span>)</p>
+
+    <h4>Weitere Vorschläge</h4>
+    <ul id="top-list"></ul>
+    </div>
+
+
+  <script src="script.js"></script>
+</body>
+</html>

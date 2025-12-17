@@ -15,3 +15,6 @@ quickdraw==0.2.0
 
 # Optional: nützlich für spätere Schritte
 python-multipart==0.0.7
+
+
+python-multipart

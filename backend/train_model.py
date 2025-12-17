@@ -1,105 +1,143 @@
-import os
 import json
 from pathlib import Path
-
-import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
+# =========================
+# Pfade
+# =========================
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR.parent / "data" / "images"
-MODELS_DIR = BASE_DIR.parent / "models"
-MODELS_DIR.mkdir(parents=True, exist_ok=True)
+DATA_DIR = BASE_DIR / "data" / "images"
+MODELS_DIR = BASE_DIR / "models"
+MODELS_DIR.mkdir(exist_ok=True)
 
-IMG_SIZE = 28
+# =========================
+# Parameter
+# =========================
+IMG_SIZE = 64
 BATCH_SIZE = 64
-EPOCHS = 15
+EPOCHS = 25
+AUTOTUNE = tf.data.AUTOTUNE
+SEED = 42
 
-def create_generators():
-    if not DATA_DIR.exists():
-        raise FileNotFoundError(f"Datenordner nicht gefunden: {DATA_DIR}")
-
-    datagen = ImageDataGenerator(
-        rescale=1.0 / 255.0,
-        validation_split=0.2
-    )
-
-    train_gen = datagen.flow_from_directory(
+# =========================
+# Dataset laden
+# =========================
+def load_datasets():
+    train_ds = tf.keras.utils.image_dataset_from_directory(
         DATA_DIR,
-        target_size=(IMG_SIZE, IMG_SIZE),
-        color_mode="grayscale",
-        class_mode="categorical",
-        batch_size=BATCH_SIZE,
+        validation_split=0.2,
         subset="training",
-        shuffle=True
-    )
-
-    val_gen = datagen.flow_from_directory(
-        DATA_DIR,
-        target_size=(IMG_SIZE, IMG_SIZE),
+        seed=SEED,
+        image_size=(IMG_SIZE, IMG_SIZE),
         color_mode="grayscale",
-        class_mode="categorical",
-        batch_size=BATCH_SIZE,
-        subset="validation",
-        shuffle=False
+        batch_size=BATCH_SIZE
     )
 
-    return train_gen, val_gen
+    val_ds = tf.keras.utils.image_dataset_from_directory(
+        DATA_DIR,
+        validation_split=0.2,
+        subset="validation",
+        seed=SEED,
+        image_size=(IMG_SIZE, IMG_SIZE),
+        color_mode="grayscale",
+        batch_size=BATCH_SIZE
+    )
 
+    class_names = train_ds.class_names
+
+    # Normalisierung
+    normalization = layers.Rescaling(1.0 / 255)
+
+    train_ds = train_ds.map(lambda x, y: (normalization(x), y))
+    val_ds = val_ds.map(lambda x, y: (normalization(x), y))
+
+    train_ds = train_ds.cache().shuffle(1000).prefetch(AUTOTUNE)
+    val_ds = val_ds.cache().prefetch(AUTOTUNE)
+
+    return train_ds, val_ds, class_names
+
+# =========================
+# Modell
+# =========================
 def build_model(input_shape, num_classes):
+    data_augmentation = models.Sequential([
+        layers.RandomRotation(0.08),
+        layers.RandomZoom(0.1),
+        layers.RandomTranslation(0.1, 0.1),
+    ])
+
     model = models.Sequential([
         layers.Input(shape=input_shape),
-        layers.Conv2D(32, (3, 3), activation="relu", padding="same"),
-        layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(64, (3, 3), activation="relu", padding="same"),
-        layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(128, (3, 3), activation="relu", padding="same"),
-        layers.MaxPooling2D((2, 2)),
-        layers.Flatten(),
-        layers.Dense(128, activation="relu"),
-        layers.Dropout(0.3),
+        data_augmentation,
+
+        layers.Conv2D(32, 3, activation="relu", padding="same"),
+        layers.Conv2D(32, 3, activation="relu", padding="same"),
+        layers.MaxPooling2D(),
+
+        layers.Conv2D(64, 3, activation="relu", padding="same"),
+        layers.Conv2D(64, 3, activation="relu", padding="same"),
+        layers.MaxPooling2D(),
+
+        layers.Conv2D(128, 3, activation="relu", padding="same"),
+        layers.Conv2D(128, 3, activation="relu", padding="same"),
+        layers.MaxPooling2D(),
+
+        layers.GlobalAveragePooling2D(),
+        layers.Dense(256, activation="relu"),
+        layers.Dropout(0.5),
+
         layers.Dense(num_classes, activation="softmax")
     ])
 
     model.compile(
         optimizer="adam",
-        loss="categorical_crossentropy",
+        loss="sparse_categorical_crossentropy",
         metrics=["accuracy"]
     )
 
     return model
 
+# =========================
+# Main
+# =========================
 def main():
-    print(f"Verwende Daten aus: {DATA_DIR}")
+    train_ds, val_ds, class_names = load_datasets()
 
-    train_gen, val_gen = create_generators()
-
-    num_classes = train_gen.num_classes
-    class_indices = train_gen.class_indices
-
-    input_shape = (IMG_SIZE, IMG_SIZE, 1)
-    model = build_model(input_shape, num_classes)
+    model = build_model(
+        input_shape=(IMG_SIZE, IMG_SIZE, 1),
+        num_classes=len(class_names)
+    )
 
     model.summary()
 
-    history = model.fit(
-        train_gen,
-        validation_data=val_gen,
-        epochs=EPOCHS
+    callbacks = [
+        tf.keras.callbacks.EarlyStopping(
+            patience=5,
+            restore_best_weights=True
+        ),
+        tf.keras.callbacks.ModelCheckpoint(
+            MODELS_DIR / "quickdraw_cnn.h5",
+            save_best_only=True
+        )
+    ]
+
+    model.fit(
+        train_ds,
+        validation_data=val_ds,
+        epochs=EPOCHS,
+        callbacks=callbacks
     )
 
-    model_path = MODELS_DIR / "quickdraw_cnn.h5"
-    model.save(model_path)
-    print(f"Modell gespeichert unter: {model_path}")
+    with open(MODELS_DIR / "class_indices.json", "w", encoding="utf-8") as f:
+        json.dump(
+            {i: name for i, name in enumerate(class_names)},
+            f,
+            indent=2,
+            ensure_ascii=False
+        )
 
-    index_to_class = {idx: cls for cls, idx in class_indices.items()}
-
-    mapping_path = MODELS_DIR / "class_indices.json"
-    with open(mapping_path, "w", encoding="utf-8") as f:
-        json.dump(index_to_class, f, ensure_ascii=False, indent=2)
-
-    print(f"Klassenmapping gespeichert unter: {mapping_path}")
+    print("✅ Modell & Klassen gespeichert")
 
 if __name__ == "__main__":
     main()
