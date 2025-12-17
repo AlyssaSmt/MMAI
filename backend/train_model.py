@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
@@ -21,9 +22,9 @@ AUTOTUNE = tf.data.AUTOTUNE
 SEED = 42
 
 # =========================
-# Dataset laden
+# Datasets laden
 # =========================
-def load_datasets():
+def load_datasets(): 
     train_ds = tf.keras.utils.image_dataset_from_directory(
         DATA_DIR,
         validation_split=0.2,
@@ -45,53 +46,49 @@ def load_datasets():
     )
 
     class_names = train_ds.class_names
+    print("Klassen:", class_names)
 
-    # Normalisierung
+    # Normalisierung: exakt wie Canvas (0..1)
     normalization = layers.Rescaling(1.0 / 255)
 
     train_ds = train_ds.map(lambda x, y: (normalization(x), y))
-    val_ds = val_ds.map(lambda x, y: (normalization(x), y))
+    val_ds   = val_ds.map(lambda x, y: (normalization(x), y))
 
-    train_ds = train_ds.cache().shuffle(1000).prefetch(AUTOTUNE)
-    val_ds = val_ds.cache().prefetch(AUTOTUNE)
+    train_ds = train_ds.shuffle(1000).cache().prefetch(AUTOTUNE)
+    val_ds   = val_ds.cache().prefetch(AUTOTUNE)
 
     return train_ds, val_ds, class_names
 
 # =========================
-# Modell
+# Modell (Sketch-stabil)
 # =========================
 def build_model(input_shape, num_classes):
-    data_augmentation = models.Sequential([
-        layers.RandomRotation(0.08),
-        layers.RandomZoom(0.1),
-        layers.RandomTranslation(0.1, 0.1),
-    ])
-
     model = models.Sequential([
         layers.Input(shape=input_shape),
-        data_augmentation,
 
-        layers.Conv2D(32, 3, activation="relu", padding="same"),
-        layers.Conv2D(32, 3, activation="relu", padding="same"),
+        layers.Conv2D(32, 3, padding="same", activation="relu"),
+        layers.Conv2D(32, 3, padding="same", activation="relu"),
         layers.MaxPooling2D(),
 
-        layers.Conv2D(64, 3, activation="relu", padding="same"),
-        layers.Conv2D(64, 3, activation="relu", padding="same"),
+        layers.Conv2D(64, 3, padding="same", activation="relu"),
+        layers.Conv2D(64, 3, padding="same", activation="relu"),
         layers.MaxPooling2D(),
 
-        layers.Conv2D(128, 3, activation="relu", padding="same"),
-        layers.Conv2D(128, 3, activation="relu", padding="same"),
+        layers.Conv2D(128, 3, padding="same", activation="relu"),
+        layers.Conv2D(128, 3, padding="same", activation="relu"),
         layers.MaxPooling2D(),
 
-        layers.GlobalAveragePooling2D(),
+        # ⚠️ KEIN GlobalAveragePooling (wichtig!)
+        layers.Flatten(),
+
         layers.Dense(256, activation="relu"),
-        layers.Dropout(0.5),
+        layers.Dropout(0.4),
 
         layers.Dense(num_classes, activation="softmax")
     ])
 
     model.compile(
-        optimizer="adam",
+        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"]
     )
@@ -117,7 +114,7 @@ def main():
             restore_best_weights=True
         ),
         tf.keras.callbacks.ModelCheckpoint(
-            MODELS_DIR / "quickdraw_cnn.h5",
+            MODELS_DIR / "quickdraw_cnn.keras",
             save_best_only=True
         )
     ]
@@ -129,6 +126,7 @@ def main():
         callbacks=callbacks
     )
 
+    # Klassen speichern
     with open(MODELS_DIR / "class_indices.json", "w", encoding="utf-8") as f:
         json.dump(
             {i: name for i, name in enumerate(class_names)},
@@ -139,5 +137,6 @@ def main():
 
     print("✅ Modell & Klassen gespeichert")
 
+# =========================
 if __name__ == "__main__":
     main()

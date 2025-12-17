@@ -28,7 +28,7 @@ app.add_middleware(
 # Modell laden
 # =========================
 BASE_DIR = Path(__file__).resolve().parent
-MODEL_PATH = BASE_DIR / "models" / "quickdraw_cnn.h5"
+MODEL_PATH = BASE_DIR / "models" / "quickdraw_cnn.keras"
 CLASSES_PATH = BASE_DIR / "models" / "class_indices.json"
 
 model = tf.keras.models.load_model(MODEL_PATH)
