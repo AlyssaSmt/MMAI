@@ -1,52 +1,53 @@
-# MMAI
+# MMAI – Montagsmaler mit KI
+
+## Features
+
+-  Zeichnen im Browser (Canvas)
+-  KI-Vorhersagen mit Confidence-Werten
+-  Top-1 & Top-3 Predictions
+-  Speichern korrekt erkannter Zeichnungen
+-  Galerie mit gespeicherten Ergebnissen
+-  Sichtbare Unsicherheit bei unvollständigen Skizzen
+
+---
+
+## Verwendete Technologien
+
+- **TensorFlow / Keras** – Training des CNN
+- **FastAPI** – Backend & Inferenz
+- **Python** – Datenverarbeitung & Training
+- **HTML / CSS / JavaScript** – Frontend
+- **Google Quick, Draw! Dataset** – Trainingsdaten
+
+---
+
+
+## How to get started
 
 bash:
-1. Virtuelle Umgebung erstellen:
+1. Virtuelle Umgebung erstellen und aktivieren:
     python -m venv .venv
-2. .venv\Scripts\activate  (mac: source .venv/bin/activate)
+    .venv\Scripts\activate  (mac: source .venv/bin/activate)
 
-3. Abhängigkeiten installieren
+2. Abhängigkeiten installieren
     pip install tensorflow fastapi uvicorn pillow numpy python-multipart
     pip install scikit-learn
 
-4. NDJSON → Bilder konvertieren
+3. NDJSON → Bilder konvertieren
     cd backend
     python convert_ndjson_to_png.py
 
-5. KI trainieren
+4. KI trainieren
     python train_model.py
 
-6. Backend starten (FastAPI)
+5. Backend starten (FastAPI)
     uvicorn main:app --reload --port 8001
 
 Test (optional):
     Browser öffnen:
     http://127.0.0.1:8001/docs
 
-7. Frontend starten
+6. Frontend starten
     frontend/index.html
 
 
-
-
-
-
-
-
-
-
-
-
-
-Musste neu trainieren, weil es immer alles als string bean gesehen hat, hab dann string bean gelöscht
-
-ebenfalls falsche daten benutzt, die nicht nur das bild sondern auch viel freiraum hatten.
-
-
-Nicht alle Klassen sind für kleine CNNs geeignet.
-Klassen mit ähnlicher geometrischer Struktur
-führten zu systematischen Fehlklassifikationen.
-Durch gezielte Klassenselektion mit hoher visueller Varianz
-konnte das Modell stabilisiert werden
-
-sehr limitiert, da es immer nur das gleiche errät
