@@ -25,6 +25,14 @@ Das Projekt orientiert sich am Spielprinzip von *Montagsmaler* und demonstriert 
 - **Google Quick, Draw! Dataset** – Trainingsdaten
 
 ---
+## Quick Draw! NDJSNON-Dateien hinzufügen
+
+Die NDJSON-Dateien des Quick Draw!-Datensatzes müssen manuell heruntergeladen und eingefügt werden, da sie aus Größen­gründen nicht im Repository enthalten sind.
+
+Lade die vorgegebenen Kategorien von:
+https://github.com/googlecreativelab/quickdraw-dataset
+
+Die Kategorien sind in class_indices.json vorgegeben. Es kann jedoch frei von den Kategorien gewählt werden, solange die class_indices mit den Kategorien übereinstimmt.
 
 ## How to get started
 
