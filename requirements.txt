@@ -1,19 +1,16 @@
 # --- KI / Machine Learning ---
-tensorflow==2.17.0
-numpy==1.26.4
-scikit-learn==1.4.2
+tensorflow
+numpy
+scikit-learn
 
 # --- Bildverarbeitung ---
-Pillow==10.3.0
+Pillow
 
 # --- Backend API ---
-fastapi==0.111.0
-uvicorn==0.29.0
+fastapi
+uvicorn
 
 # --- QuickDraw Tools ---
-quickdraw==0.2.0
-
-python-multipart==0.0.7
-
+quickdraw
 
 python-multipart

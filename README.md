@@ -44,7 +44,7 @@ source .venv/bin/activate    # macOS / Linux
 ```
 2. Abhängigkeiten installieren
 ```bash
-    pip install reqquirements.txt
+    pip install -r requirements.txt
 ```
 3. NDJSON → Bilder konvertieren
 ```bash
