@@ -60,7 +60,7 @@ def load_datasets():
     return train_ds, val_ds, class_names
 
 # =========================
-# Modell (Sketch-stabil)
+# Modell
 # =========================
 def build_model(input_shape, num_classes):
     model = models.Sequential([

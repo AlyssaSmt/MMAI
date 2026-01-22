@@ -163,7 +163,7 @@ function draw(e) {
 }
 
 // ======================
-// Ink-Menge (KORRIGIERT!)
+// Ink-Menge
 // ======================
 function getInkAmount() {
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
