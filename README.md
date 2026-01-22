@@ -32,7 +32,7 @@ Die NDJSON-Dateien des Quick Draw!-Datensatzes müssen manuell heruntergeladen u
 Lade die vorgegebenen Kategorien von:
 https://github.com/googlecreativelab/quickdraw-dataset
 
-Die Kategorien sind in class_indices.json vorgegeben. Es kann jedoch frei von den Kategorien gewählt werden, solange die class_indices mit den Kategorien übereinstimmt.
+Die Kategorien sind in `class_indices.json` vorgegeben. Es kann jedoch frei von den Kategorien gewählt werden, solange die `class_indices.json` mit den Kategorien übereinstimmt.
 
 ## How to get started
 
